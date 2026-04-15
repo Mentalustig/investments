@@ -5,4 +5,4 @@ compatibility_date = "2026-04-14"
 [[d1_databases]]
 binding = "DB"
 database_name = "immobilien-db"
-database_id = "REPLACE_WITH_YOUR_D1_ID"
+database_id = "7b13e3fe-fb44-4f41-8a7d-a48f0811a866"
