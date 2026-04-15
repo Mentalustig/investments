@@ -108,7 +108,7 @@ function calculate(p) {
     vtj: vt ? vt.jr : null,
     cfpy: cfpy ? cfpy.jr : null,
     ws, ekr: ek > 0 ? (12 * cfn + 12 * tm + ws * wst) / ek : 0,
-    d1, dg, afp, afb, afs, ihm, mam, gr, nk,
+    d1, dg, afp, afb, afs, ihm, mam, gr,
   };
 
   return { df: rows, s };
