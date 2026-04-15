@@ -1,66 +1,45 @@
 // CRUD for saved scenarios — Cloudflare Pages Function
+// Auth via Cloudflare Zero Trust header (cf-access-authenticated-user-email)
 // GET    /api/scenarios        → list all scenarios for current user
 // POST   /api/scenarios        → create scenario
 // PUT    /api/scenarios?id=... → update scenario
 // DELETE /api/scenarios?id=... → delete scenario
 
-function getCookie(request, name) {
-  const cookies = request.headers.get("Cookie") || "";
-  const match = cookies.split(";").map(c => c.trim()).find(c => c.startsWith(name + "="));
-  return match ? match.split("=")[1] : null;
+function getUserId(context) {
+  // Cloudflare Zero Trust injects this header after successful auth
+  const email = context.request.headers.get("cf-access-authenticated-user-email");
+  return email || "lucas"; // fallback for local dev
 }
 
-async function getUser(context) {
-  const sessionId = getCookie(context.request, "session");
-  if (!sessionId || !context.env.DB) return null;
-  const row = await context.env.DB
-    .prepare("SELECT user_json FROM sessions WHERE id = ? AND expires_at > ?")
-    .bind(sessionId, Date.now())
-    .first();
-  return row ? JSON.parse(row.user_json) : null;
-}
-
-const CORS = {
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": "*",
-};
+const JSON_HEADERS = { "Content-Type": "application/json" };
 
 export async function onRequestGet(context) {
-  const user = await getUser(context);
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: CORS });
+  const userId = getUserId(context);
 
   const rows = await context.env.DB
     .prepare("SELECT * FROM scenarios WHERE user_id = ? ORDER BY updated_at DESC")
-    .bind(user.id)
+    .bind(userId)
     .all();
 
-  const scenarios = rows.results.map(r => ({
-    ...r,
-    inputs: JSON.parse(r.inputs),
-  }));
-
-  return new Response(JSON.stringify({ scenarios }), { headers: CORS });
+  const scenarios = rows.results.map(r => ({ ...r, inputs: JSON.parse(r.inputs) }));
+  return new Response(JSON.stringify({ scenarios }), { headers: JSON_HEADERS });
 }
 
 export async function onRequestPost(context) {
-  const user = await getUser(context);
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: CORS });
-
+  const userId = getUserId(context);
   const body = await context.request.json();
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await context.env.DB.prepare(
     "INSERT INTO scenarios (id, user_id, name, address, inputs, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  ).bind(id, user.id, body.name, body.address || "", JSON.stringify(body.inputs), now, now).run();
+  ).bind(id, userId, body.name, body.address || "", JSON.stringify(body.inputs), now, now).run();
 
-  return new Response(JSON.stringify({ id }), { headers: CORS });
+  return new Response(JSON.stringify({ id }), { headers: JSON_HEADERS });
 }
 
 export async function onRequestPut(context) {
-  const user = await getUser(context);
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: CORS });
-
+  const userId = getUserId(context);
   const url = new URL(context.request.url);
   const id = url.searchParams.get("id");
   const body = await context.request.json();
@@ -68,29 +47,18 @@ export async function onRequestPut(context) {
 
   await context.env.DB.prepare(
     "UPDATE scenarios SET name=?, address=?, inputs=?, updated_at=? WHERE id=? AND user_id=?"
-  ).bind(body.name, body.address || "", JSON.stringify(body.inputs), now, id, user.id).run();
+  ).bind(body.name, body.address || "", JSON.stringify(body.inputs), now, id, userId).run();
 
-  return new Response(JSON.stringify({ ok: true }), { headers: CORS });
+  return new Response(JSON.stringify({ ok: true }), { headers: JSON_HEADERS });
 }
 
 export async function onRequestDelete(context) {
-  const user = await getUser(context);
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: CORS });
-
+  const userId = getUserId(context);
   const url = new URL(context.request.url);
   const id = url.searchParams.get("id");
 
-  await context.env.DB.prepare("DELETE FROM scenarios WHERE id=? AND user_id=?").bind(id, user.id).run();
+  await context.env.DB.prepare("DELETE FROM scenarios WHERE id=? AND user_id=?")
+    .bind(id, userId).run();
 
-  return new Response(JSON.stringify({ ok: true }), { headers: CORS });
-}
-
-export async function onRequestOptions() {
-  return new Response(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
+  return new Response(JSON.stringify({ ok: true }), { headers: JSON_HEADERS });
 }
