@@ -1,0 +1,8 @@
+name = "immobilien-kalkulator"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-04-14"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "immobilien-db"
+database_id = "REPLACE_WITH_YOUR_D1_ID"

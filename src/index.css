@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg:            #f5f0e8;
+  --bg-subtle:     #ede8df;
+  --surface:       #ffffff;
+  --surface-dim:   #f9f7f3;
+  --border:        #d6cfc3;
+  --border-strong: #b8b0a4;
+
+  --dark:          #1a2e1a;
+  --dark-hover:    #243d24;
+  --dark-text:     #c8d8c8;
+  --dark-text-em:  #ffffff;
+
+  --green-900:     #1a2e1a;
+  --green-700:     #2d5a2d;
+  --green-500:     #4a7c4a;
+  --green-300:     #7aad7a;
+  --green-100:     #d4e8d4;
+
+  --positive:      #4a7c4a;
+  --negative:      #c0392b;
+  --warning:       #b7791f;
+  --info:          #2c5f8a;
+  --info-bg:       #dce8f0;
+
+  --text:          #1a1a1a;
+  --text-2:        #5a5a5a;
+  --text-3:        #8a8a8a;
+
+  --r-sm: 4px; --r-md: 8px; --r-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+input, select, button { font-family: inherit; }
+
+button { cursor: pointer; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-subtle); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
