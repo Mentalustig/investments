@@ -1,4 +1,4 @@
-// Immobilien-Kalkulator — calculation engine
+// Immobilien-Kalkulator — calculation engine v2
 // Cloudflare Pages Function: POST /api/calculate
 
 const GREST = {
@@ -22,86 +22,100 @@ function est(z) {
 function marginalTaxRate(zve, gemeinsam = false, kirche = false) {
   const e0 = gemeinsam ? est(zve / 2) * 2 : est(zve);
   const e1 = gemeinsam ? est((zve + 1) / 2) * 2 : est(zve + 1);
-  const r = (e1 - e0) * 1.055; // Solidaritätszuschlag
+  const r = (e1 - e0) * 1.055;
   return kirche ? r * 1.085 : r;
+}
+
+// IRR via Newton-Raphson — finds r such that NPV(cashflows) = 0
+// cashflows[0] = initial investment (negative), cashflows[1..n] = annual net cashflows
+function calcIRR(cashflows) {
+  if (cashflows.length < 2) return null;
+  let r = 0.08; // initial guess 8%
+  for (let iter = 0; iter < 200; iter++) {
+    let npv = 0, dnpv = 0;
+    for (let t = 0; t < cashflows.length; t++) {
+      const d = Math.pow(1 + r, t);
+      npv += cashflows[t] / d;
+      dnpv -= t * cashflows[t] / (d * (1 + r));
+    }
+    if (Math.abs(dnpv) < 1e-12) break;
+    const rNew = r - npv / dnpv;
+    if (Math.abs(rNew - r) < 1e-9) { r = rNew; break; }
+    r = rNew;
+  }
+  return (r > -0.99 && r < 10) ? r : null;
 }
 
 function calculate(p) {
   const {
     kp, km, z1, t1, d1p, d2s = 0, z2 = 0, t2 = 0,
-    hg, gsm, ihq, wfl, ma, mst, wst, kst,
-    bj, ga, inv = 0, zve, vl, ki, mk, no, gb, bl,
-    zfest = 10,   // Zinsbindungsfrist Darlehen I (Jahre)
-    zans,         // Anschlusszinssatz nach Ablauf (default = z1)
+    hg = 0, gsm = 0, ihq = 10, wfl = 60, ma = 0,
+    mst = 0, wst = 0.02, kst = 0.02,
+    bj = "1951-1960", ga = 0.8, inv = 0,
+    zve = 60000, vl = "Einzeln", ki = false,
+    mk = 0, no = 0.015, gb = 0.005, bl = "Nordrhein-Westfalen",
+    zfest = 10, zans,
   } = p;
 
-  const zans_ = (zans != null) ? zans : z1;
-
+  const zans_ = zans != null ? zans : z1;
   const gr = GREST[bl] || 0.065;
   const nk = (gr + mk + no + gb) * kp;
-  const gi = kp + nk + inv;
+  const gi = kp + nk + inv;             // Gesamtinvestition
   const d1 = d1p * kp;
   const dg = d1 + d2s;
-  const ek = gi - dg;
+  const ek = gi - dg;                   // Eigenkapital (tatsächlich eingesetzt)
 
-  // Year-1 annuities (for summary stats)
   const a1 = (z1 + t1) * d1;
   const a2 = (z2 + t2) * d2s;
-  const rm = (a1 + a2) / 12;
+  const rm = (a1 + a2) / 12;           // monatliche Rate Jahr 1
 
-  const ihm = wfl * ihq / 12;          // Instandhaltung €/Monat
-  const um = gsm;                       // Grundsteuer + Nebenkosten
-  const wm = km + um;                   // Warmmiete
-  const mam = ma * wm;                  // Mietausfall €/Monat
-  const bg = um + hg + ihm + mam;       // Bewirtschaftungskosten gesamt
+  const ihm = wfl * ihq / 12;           // Instandhaltungsrücklage €/M
+  const um = gsm;                        // Grundsteuer/NK (umlagefähig)
+  const wm = km + um;                    // Warmmiete
+  const mam = ma * km;                   // Mietausfall auf Kaltmiete
+  const bg = hg + ihm + mam;            // nicht-umlagefähige Bewirtschaftungskosten
 
-  // AfA
   const afs = bj === "vor 1925" ? 0.025 : 0.02;
-  const afb = ga * (kp + nk) + inv;     // AfA-Basis
-  const afp = afs * afb;               // AfA €/Jahr
+  const afb = ga * (kp + nk) + inv;
+  const afp = afs * afb;
   const afm = afp / 12;
-  const afx = Math.floor(1 / afs);     // AfA-Laufzeit (Jahre)
+  const afx = Math.floor(1 / afs);
 
   const GST = marginalTaxRate(zve, vl === "Gemeinsam", ki);
 
-  // Year-1 summary values (for KPIs)
+  // Jahr-1 Kennzahlen
   const zm = z1 * d1 / 12;
   const tm = t1 * d1 / 12;
-  const cfop = wm - bg - rm;
-  const scf = wm - (bg - ihm - mam) - zm - afm;
-  const stm = GST * scf;
-  const cfn = cfop - stm;
-  const ws = kp + inv;
+  const cfop = km - bg - rm;            // CF operativ (Kaltmiete - Kosten - Rate)
+  const scf = km - bg - zm - afm;       // steuerliche Bemessungsgrundlage
+  const stm = GST * Math.max(scf, 0);  // Steuer nur bei positivem steuerpflichtigen Ergebnis
+  const cfn = cfop - stm;              // CF netto
 
-  // Nettomietrendite
-  const nmr = gi > 0 ? (wm - bg) * 12 / gi : 0;
-  // EK-Rendite (Jahr 1)
-  const ekr = ek > 0 ? (12 * cfn + 12 * tm + ws * wst) / ek : 0;
+  // Kennzahlen
+  const br = kp > 0 ? km * 12 / kp : 0;                          // Bruttomietrendite
+  const nmr = gi > 0 ? (km - hg - ihm - mam) * 12 / gi : 0;     // Nettomietrendite
+  const verv = km > 0 ? kp / (km * 12) : 0;                      // Vervielfältiger (KP/Jahresmiete)
 
-  // ── 60-year projection ───────────────────────────────
+  // 60-Jahres-Projektion
   let r1 = d1, r2 = d2s, ka = 0;
   const rows = [];
 
   for (let i = 0; i < 60; i++) {
-    // Switch interest rate after Zinsbindungsende
     const rate1 = i < zfest ? z1 : zans_;
-    const a1_i = (rate1 + t1) * d1;   // annuity for this year
+    const a1_i = (rate1 + t1) * d1;
 
     const mi = km * Math.pow(1 + mst, i);
     const ui = um * Math.pow(1 + kst, i);
     const wi = mi + ui;
-    const we = ws * Math.pow(1 + wst, i + 1);
+    const we = (kp + inv) * Math.pow(1 + wst, i + 1);
 
-    // AfA for this year
     let ai = i < afx ? Math.max(0, Math.min(afp, afb - ka)) : 0;
     ka += ai;
 
-    // Darlehen I
     const zz1 = rate1 * r1;
     const tt1 = Math.min(r1, Math.max(a1_i - zz1, 0));
     r1 = Math.max(r1 - tt1, 0);
 
-    // Darlehen II
     const zz2 = z2 * r2;
     const tt2 = d2s > 0 ? Math.min(r2, Math.max(a2 - zz2, 0)) : 0;
     r2 = Math.max(r2 - tt2, 0);
@@ -110,78 +124,98 @@ function calculate(p) {
     const ti = tt1 + tt2;
     const rsi = r1 + r2;
 
-    const bi = ui + (hg + ihm) * Math.pow(1 + kst, i) + ma * wi;
-    const coi = wi - bi - (zi + ti) / 12;
-
-    // Steuerliche Berechnung
-    const sci = wi - (ui + hg * Math.pow(1 + kst, i)) - zi / 12 - ai / 12;
-    const sti = GST * sci;
+    const bi = (hg + ihm) * Math.pow(1 + kst, i) + ma * mi;
+    const coi = mi - bi - (zi + ti) / 12;
+    const sci = mi - bi - zi / 12 - ai / 12;
+    const sti = GST * Math.max(sci, 0);
     const cni = coi - sti;
 
     rows.push({
       jr: 2026 + i, j: i,
       mi, wi, bi,
-      rm: (zi + ti) / 12,  // actual monthly rate (changes after zfest!)
+      rm: (zi + ti) / 12,
       co: coi, st: sti, cn: cni, cj: cni * 12,
       zi, ti, rs: rsi, w: we, nv: we - rsi, af: ai,
-      refi: i === zfest,  // mark refinancing year
+      refi: i === zfest,
     });
   }
 
-  // Cumulative values
   let cumCf = 0, cumZ = 0;
   rows.forEach(r => {
     cumCf += r.cj; r.kcf = cumCf;
     cumZ += r.zi; r.kz = cumZ;
-    r.tot = r.nv + cumCf;
+    r.tot = r.nv + cumCf;  // Nettovermögen + kumulierter CF
   });
 
+  // IRR für verschiedene Zeithorizonte
+  // Cashflows: Jahr 0 = -EK (Eigenkapitaleinsatz)
+  // Jedes Jahr: CF netto
+  // Im letzten Jahr: + Verkaufserlös (Marktwert - Restschuld)
+  const IRR_YEARS = [3, 5, 10, 15, 20, 30, 50];
+  const irr = {};
+  for (const yr of IRR_YEARS) {
+    const idx = yr - 1;
+    if (idx >= rows.length) { irr[yr] = null; continue; }
+    const cfs = [-ek];
+    for (let i = 0; i <= idx; i++) {
+      const cf = rows[i].cj;
+      const exitValue = i === idx ? (rows[i].w - rows[i].rs) : 0;
+      cfs.push(cf + exitValue);
+    }
+    irr[yr] = calcIRR(cfs);
+  }
+
+  // Kumulierte Einzahlungen vs. Rückflüsse für Rendite-Tab
+  const cumInvested = rows.map((r, i) => ({
+    year: r.jr,
+    eingezahlt: ek + Math.max(0, -rows.slice(0, i + 1).reduce((s, x) => s + x.cj, 0)),
+    rueckfluss: Math.max(0, rows.slice(0, i + 1).reduce((s, x) => s + x.cj, 0)),
+    vermoegen: r.tot,
+    etf7: ek * Math.pow(1.07, i + 1),
+    etf5: ek * Math.pow(1.05, i + 1),
+  }));
+
   const vt = rows.find(r => r.rs <= 0);
-  const cfpy = rows.find(r => r.cn >= 0);
+  const cfPositive = rows.find(r => r.cn >= 0);
 
   const s = {
-    cfn, ek, gi, nk, rm, br: kp ? km * 12 / kp : 0,
-    nmr,  // Nettomietrendite
-    stm, zm, tm, afm, gst: GST, bg, wm, cfop,
+    cfn, cfop, stm, zm, tm, rm, afm, afp, afb, afs,
+    gst: GST, bg, wm, km,
+    br, nmr, verv,
+    ek, gi, dg, d1, nk,
+    ekr: ek > 0 ? (12 * cfn + 12 * tm + kp * wst) / ek : 0,
+    irr,
+    gr,
     vtj: vt ? vt.jr : null,
-    cfpy: cfpy ? cfpy.jr : null,
-    ws, ekr,
-    d1, dg, afp, afb, afs, ihm, mam, gr,
+    cfPositiveYear: cfPositive ? cfPositive.jr : null,
+    ihm, mam, hg,
   };
 
-  return { df: rows, s };
+  return { df: rows, s, cumInvested };
 }
 
 function findBreakeven(key, lo, hi, step, params) {
   for (let v = Math.floor(lo * step); v <= Math.floor(hi * step); v++) {
     const vv = v / step;
-    const { s } = calculate({ ...params, [key]: vv });
-    if (key === "km" && s.cfn >= 0) return vv;
-    if (key === "z1" && s.cfn < 0) return Math.max(0, (v - 1) / step);
+    try {
+      const { s } = calculate({ ...params, [key]: vv });
+      if (key === "km" && s.cfn >= 0) return vv;
+      if (key === "z1" && s.cfn < 0) return Math.max(0, (v - 1) / step);
+    } catch { /* skip */ }
   }
   return null;
 }
 
 function sensitivity2D(params) {
   const { km, z1 } = params;
-  // 9 z1 values: current ± 2% in 0.5% steps
   const z1Steps = Array.from({ length: 9 }, (_, i) => Math.max(0.005, z1 + (i - 4) * 0.005));
-  // 9 km values: current ± 200€ in 50€ steps
   const kmSteps = Array.from({ length: 9 }, (_, i) => Math.max(0, km + (i - 4) * 50));
-
   const cfMatrix = z1Steps.map(zv =>
-    kmSteps.map(kv => {
-      try { return calculate({ ...params, z1: zv, km: kv }).s.cfn; }
-      catch { return null; }
-    })
+    kmSteps.map(kv => { try { return calculate({ ...params, z1: zv, km: kv }).s.cfn; } catch { return null; } })
   );
   const ekMatrix = z1Steps.map(zv =>
-    kmSteps.map(kv => {
-      try { return calculate({ ...params, z1: zv, km: kv }).s.ekr; }
-      catch { return null; }
-    })
+    kmSteps.map(kv => { try { return calculate({ ...params, z1: zv, km: kv }).s.nmr; } catch { return null; } })
   );
-
   return { z1Steps, kmSteps, cfMatrix, ekMatrix, currentZ1: z1, currentKm: km };
 }
 
@@ -189,8 +223,8 @@ export async function onRequestPost(context) {
   try {
     const body = await context.request.json();
     const { action = "calculate", params } = body;
-
     let result;
+
     if (action === "calculate") {
       result = calculate(params);
     } else if (action === "breakeven_km") {
@@ -199,29 +233,6 @@ export async function onRequestPost(context) {
       result = { value: findBreakeven("z1", 0, 0.15, 10000, params) };
     } else if (action === "sensitivity_2d") {
       result = sensitivity2D(params);
-    } else if (action === "tornado") {
-      const base = calculate(params).s.cfn;
-      const { km, z1, kp, wst, t1 } = params;
-      const tests = [
-        ["Miete +100 €", "km", km + 100],
-        ["Miete -100 €", "km", km - 100],
-        ["Zins +1 %", "z1", z1 + 0.01],
-        ["Zins -1 %", "z1", Math.max(0, z1 - 0.01)],
-        ["KP +50k €", "kp", kp + 50000],
-        ["KP -50k €", "kp", kp - 50000],
-        ["Wertstg. 3%", "wst", 0.03],
-        ["Tilgung 2%", "t1", 0.02],
-        ["Mietstg. +2%", "mst", 0.02],
-      ];
-      result = {
-        items: tests
-          .map(([label, key, val]) => {
-            try { return [label, calculate({ ...params, [key]: val }).s.cfn - base]; }
-            catch { return null; }
-          })
-          .filter(Boolean)
-          .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-      };
     } else {
       return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400 });
     }

@@ -2,23 +2,19 @@ import { useState } from "react";
 import { useAuth } from "./useAuth.js";
 import { useCalculator } from "./useCalculator.js";
 import { useScenarios } from "./useScenarios.js";
-import InputPanel from "./components/InputPanel.jsx";
-import VerdictBar from "./components/VerdictBar.jsx";
-import Cashflow from "./components/tabs/Cashflow.jsx";
-import Rendite from "./components/tabs/Rendite.jsx";
-import Optimierung from "./components/tabs/Optimierung.jsx";
-import Risiko from "./components/tabs/Risiko.jsx";
-import Bankgespraech from "./components/tabs/Bankgespraech.jsx";
-import SzenarienSpeichern from "./components/tabs/SzenarienSpeichern.jsx";
-import { fe, fp } from "./fmt.js";
+import Sidebar from "./components/Sidebar.jsx";
+import TabCashflow from "./components/tabs/Cashflow.jsx";
+import TabRendite from "./components/tabs/Rendite.jsx";
+import TabRisiko from "./components/tabs/Risiko.jsx";
+import TabBank from "./components/tabs/Bankgespraech.jsx";
+import TabSzenarien from "./components/tabs/SzenarienSpeichern.jsx";
 
 const TABS = [
-  { id: "cashflow",    label: "Cashflow",       icon: "≋" },
-  { id: "rendite",     label: "Rendite",         icon: "%" },
-  { id: "optimierung", label: "Optimierung",     icon: "◎" },
-  { id: "risiko",      label: "Risiko",          icon: "⚡" },
-  { id: "bank",        label: "Bankgespräch",    icon: "⊡" },
-  { id: "szenarien",   label: "Szenarien",       icon: "◧" },
+  { id: "cashflow",  label: "Cashflow" },
+  { id: "rendite",   label: "Rendite & IRR" },
+  { id: "risiko",    label: "Risiko" },
+  { id: "bank",      label: "Bankgespräch" },
+  { id: "szenarien", label: "💾 Szenarien" },
 ];
 
 export default function App() {
@@ -28,91 +24,44 @@ export default function App() {
   const [tab, setTab] = useState("cashflow");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      <Sidebar inputs={inputs} update={update} />
 
-      {/* ── Top bar ── */}
-      <header style={{
-        background: "var(--dark)", color: "#fff",
-        padding: "0 24px", height: 52,
-        display: "flex", alignItems: "center", gap: 20,
-        flexShrink: 0,
-      }}>
-        <span style={{ fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--green-300)", whiteSpace: "nowrap" }}>
-          Immobilien-Kalkulator
-        </span>
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Tab bar */}
+        <nav className="bg-white border-b border-gray-200 px-6 flex items-end shrink-0">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap -mb-px ${
+                tab === t.id
+                  ? "border-brand-500 text-brand-700"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+          {loading && (
+            <span className="ml-auto mb-3 text-xs text-gray-400 animate-pulse">Berechnet…</span>
+          )}
+        </nav>
 
-        <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.15)" }} />
-
-        <input
-          value={inputs.adr}
-          onChange={e => update("adr", e.target.value)}
-          placeholder="Adresse / Objektbezeichnung"
-          style={{ background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: "0.92rem", fontWeight: 600, flex: 1, minWidth: 0 }}
-        />
-
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <InlineNum label="KP" value={inputs.kp} step={5000} onChange={v => update("kp", v)} suffix="€" width={110} />
-          <InlineNum label="m²" value={inputs.wfl} step={5} onChange={v => update("wfl", v)} suffix="m²" width={70} />
-        </div>
-
-        {loading && (
-          <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap" }}>berechnet…</span>
-        )}
-      </header>
-
-      {/* ── Inputs ── */}
-      <InputPanel inputs={inputs} update={update} />
-
-      {/* ── Verdict ── */}
-      <VerdictBar result={result} inputs={inputs} beKm={beKm} beZ1={beZ1} loading={loading} />
-
-      {/* ── Tabs ── */}
-      <nav style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)", padding: "0 24px", display: "flex", flexShrink: 0 }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            background: "none", border: "none",
-            borderBottom: tab === t.id ? "2px solid var(--green-500)" : "2px solid transparent",
-            padding: "11px 16px",
-            fontSize: "0.84rem",
-            fontWeight: tab === t.id ? 700 : 500,
-            color: tab === t.id ? "var(--green-700)" : "var(--text-2)",
-            cursor: "pointer",
-            marginBottom: -1,
-            whiteSpace: "nowrap",
-            display: "flex", alignItems: "center", gap: 6,
-            transition: "color 150ms",
-          }}>
-            <span style={{ fontSize: "0.9rem", opacity: 0.7 }}>{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
-      </nav>
-
-      {/* ── Content ── */}
-      <main style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
-        {error && (
-          <div style={{ background: "var(--negative-bg)", border: "1px solid var(--negative-border)", borderRadius: "var(--r-md)", padding: "10px 16px", color: "var(--negative)", marginBottom: 16, fontSize: "0.86rem" }}>
-            Fehler: {error}
-          </div>
-        )}
-        {tab === "cashflow"    && <Cashflow result={result} inputs={inputs} />}
-        {tab === "rendite"     && <Rendite result={result} inputs={inputs} />}
-        {tab === "optimierung" && <Optimierung result={result} inputs={inputs} />}
-        {tab === "risiko"      && <Risiko result={result} inputs={inputs} beKm={beKm} beZ1={beZ1} />}
-        {tab === "bank"        && <Bankgespraech result={result} inputs={inputs} />}
-        {tab === "szenarien"   && <SzenarienSpeichern scenarios={scenarios} inputs={inputs} onLoad={loadScenario} onSave={save} onDelete={remove} />}
-      </main>
-    </div>
-  );
-}
-
-function InlineNum({ label, value, step, onChange, suffix, width }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-      <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.06em" }}>{label}</span>
-      <input type="number" value={value} step={step} onChange={e => onChange(Number(e.target.value))}
-        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "var(--r-sm)", padding: "3px 8px", color: "#fff", fontWeight: 600, fontSize: "0.84rem", width, textAlign: "right", outline: "none" }} />
-      <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)" }}>{suffix}</span>
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {error && (
+            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              Fehler: {error}
+            </div>
+          )}
+          {tab === "cashflow"  && <TabCashflow  result={result} inputs={inputs} loading={loading} />}
+          {tab === "rendite"   && <TabRendite   result={result} inputs={inputs} loading={loading} />}
+          {tab === "risiko"    && <TabRisiko    result={result} inputs={inputs} beKm={beKm} beZ1={beZ1} loading={loading} />}
+          {tab === "bank"      && <TabBank      result={result} inputs={inputs} />}
+          {tab === "szenarien" && <TabSzenarien scenarios={scenarios} inputs={inputs} onLoad={loadScenario} onSave={save} onDelete={remove} />}
+        </main>
+      </div>
     </div>
   );
 }

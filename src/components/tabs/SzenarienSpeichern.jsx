@@ -14,43 +14,47 @@ export default function SzenarienSpeichern({ scenarios, inputs, onLoad, onSave, 
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 700 }}>
-      {/* Save current */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
-        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--green-700)", textTransform: "uppercase", marginBottom: 12 }}>Aktuelles Szenario speichern</div>
-        <div style={{ fontSize: "0.83rem", color: "var(--text-2)", marginBottom: 12 }}>
+    <div className="max-w-2xl flex flex-col gap-6">
+      {/* Save */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-green-700 mb-4">Aktuelles Szenario speichern</h2>
+        <p className="text-sm text-gray-500 mb-3">
           {inputs.adr} — {fe(inputs.kp)} — Miete {fe(inputs.km)}/M — Zins {fp(inputs.z1)}
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <input value={name} onChange={e => setName(e.target.value)}
+        </p>
+        <div className="flex gap-2">
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSave()}
             placeholder="Name (z.B. Düsseldorf Szenario A)"
-            style={{ flex: 1, background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", padding: "8px 12px", fontSize: "0.9rem", outline: "none" }} />
-          <button onClick={handleSave} disabled={saving || !name.trim()}
-            style={{ background: "var(--green-500)", color: "#fff", border: "none", borderRadius: "var(--r-sm)", padding: "8px 20px", fontWeight: 700, cursor: "pointer", opacity: saving || !name.trim() ? 0.6 : 1, whiteSpace: "nowrap" }}>
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
+          />
+          <button
+            onClick={handleSave}
+            disabled={saving || !name.trim()}
+            className="bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-40 hover:bg-green-800 transition-colors whitespace-nowrap"
+          >
             {saving ? "…" : "Speichern"}
           </button>
         </div>
       </div>
 
-      {/* Saved scenarios */}
+      {/* List */}
       {scenarios.length === 0 ? (
-        <p style={{ color: "var(--text-3)", fontSize: "0.9rem" }}>Noch keine gespeicherten Szenarien.</p>
+        <p className="text-sm text-gray-400">Noch keine gespeicherten Szenarien.</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--green-700)", textTransform: "uppercase" }}>Gespeicherte Szenarien ({scenarios.length})</div>
+        <div className="flex flex-col gap-3">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-green-700">Gespeicherte Szenarien ({scenarios.length})</h2>
           {scenarios.map(sc => (
-            <div key={sc.id} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "var(--shadow-sm)" }}>
+            <div key={sc.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex justify-between items-center">
               <div>
-                <div style={{ fontWeight: 700, marginBottom: 2 }}>{sc.name}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-2)" }}>{sc.address} · {new Date(sc.updated_at).toLocaleDateString("de-DE")}</div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-3)", marginTop: 2 }}>
-                  KP {fe(sc.inputs.kp)} · Miete {fe(sc.inputs.km)}/M · Zins {fp(sc.inputs.z1)}
-                </div>
+                <p className="font-semibold text-gray-900">{sc.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{sc.address} · {new Date(sc.updated_at).toLocaleDateString("de-DE")}</p>
+                <p className="text-xs text-gray-400 mt-0.5">KP {fe(sc.inputs.kp)} · Miete {fe(sc.inputs.km)}/M · Zins {fp(sc.inputs.z1)}</p>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => onLoad(sc.inputs)} style={{ background: "var(--green-100)", color: "var(--green-700)", border: "1px solid var(--green-300)", borderRadius: "var(--r-sm)", padding: "6px 14px", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>Laden</button>
-                <button onClick={() => onDelete(sc.id)} style={{ background: "var(--bg-subtle)", color: "var(--negative)", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", padding: "6px 14px", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>Löschen</button>
+              <div className="flex gap-2 ml-4">
+                <button onClick={() => onLoad(sc.inputs)} className="px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors">Laden</button>
+                <button onClick={() => onDelete(sc.id)} className="px-3 py-1.5 bg-gray-50 border border-gray-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 transition-colors">Löschen</button>
               </div>
             </div>
           ))}

@@ -1,91 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  /* Backgrounds */
-  --bg:            #f4f6f8;
-  --bg-subtle:     #edf0f3;
-  --surface:       #ffffff;
-
-  /* Borders */
-  --border:        #e2e6ea;
-  --border-strong: #c8cdd4;
-
-  /* Brand greens */
-  --green-900:     #14301a;
-  --green-800:     #1e4726;
-  --green-700:     #2a5c34;
-  --green-600:     #357040;
-  --green-500:     #4a8a56;
-  --green-400:     #6aaa76;
-  --green-300:     #9acc9a;
-  --green-100:     #dff0df;
-  --green-50:      #f0f8f0;
-
-  /* Dark (header/accent) */
-  --dark:          #1a2e20;
-  --dark-hover:    #243d2a;
-
-  /* Text */
-  --text-1:        #1a1d21;
-  --text-2:        #52575e;
-  --text-3:        #8a9099;
-
-  /* Semantic */
-  --positive:      #2a7a3a;
-  --positive-bg:   #eaf5eb;
-  --positive-border:#b8ddbf;
-  --negative:      #c0392b;
-  --negative-bg:   #fdf0ee;
-  --negative-border:#f0b8b0;
-  --warning:       #8a6000;
-  --warning-bg:    #fdf7e6;
-  --warning-border:#f0d880;
-  --info:          #2c5f8a;
-  --info-bg:       #dce8f5;
-
-  /* Radii */
-  --r-xs: 3px;
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-
-  --font: 'Inter', system-ui, -apple-system, sans-serif;
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    opacity: 0.3;
+  }
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { font-size: 14px; }
-
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text-1);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-input, select, button, textarea { font-family: inherit; font-size: inherit; }
-
-button { cursor: pointer; }
-
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button { opacity: 0.4; }
-
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
-
-/* Utility classes */
-.tabular { font-variant-numeric: tabular-nums; }
-
-/* Print styles */
 @media print {
   .no-print { display: none !important; }
-  body { background: white; font-size: 12px; }
-  #bank-doc { box-shadow: none; }
 }
