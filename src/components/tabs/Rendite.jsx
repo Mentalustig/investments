@@ -1,7 +1,7 @@
 import { fe, fp, colorCls } from "../../fmt.js";
 import {
   ResponsiveContainer, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
 
 const IRR_YEARS = [3, 5, 10, 15, 20, 30, 50];
