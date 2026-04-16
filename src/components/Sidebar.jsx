@@ -78,8 +78,11 @@ function Row2({ children }) {
   return <div className="grid grid-cols-2 gap-2">{children}</div>;
 }
 
+const FAMILIENSTAND = ["Ledig", "Verheiratet", "Eingetragene Partnerschaft", "Getrennt lebend", "Geschieden", "Verwitwet"];
+const GUETERSTAND   = ["Zugewinn", "Gütertrennung", "Gütergemeinschaft"];
+
 export default function Sidebar({ inputs, update }) {
-  const [open, setOpen] = useState({ objekt: true, finanz: true, kosten: false, prognose: false, steuer: false });
+  const [open, setOpen] = useState({ objekt: true, finanz: true, kosten: false, prognose: false, steuer: false, person: false, vermoegen: false, haushalt: false });
   const toggle = k => setOpen(o => ({ ...o, [k]: !o[k] }));
   const gr = GREST[inputs.bl] || 0.065;
 
@@ -198,6 +201,133 @@ export default function Sidebar({ inputs, update }) {
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kirchensteuer</span>
             <Toggle value={inputs.ki} onChange={v => update("ki", v)} />
           </div>
+        </Section>
+
+        {/* Persönliche Daten */}
+        <Section title="Persönliche Daten" open={open.person} onToggle={() => toggle("person")}>
+          <p className="text-xs text-gray-400 -mt-1 mb-1">Für Bankgespräch-Dokumente</p>
+          <Field label="Name">
+            <input className={inputCls} value={inputs.name} onChange={e => update("name", e.target.value)} placeholder="Max Mustermann" />
+          </Field>
+          <Field label="Anschrift">
+            <input className={inputCls} value={inputs.anschrift} onChange={e => update("anschrift", e.target.value)} placeholder="Musterstr. 1, 12345 Stadt" />
+          </Field>
+          <Row2>
+            <Field label="Familienstand">
+              <SelectInput value={inputs.familienstand} onChange={v => update("familienstand", v)} options={FAMILIENSTAND} />
+            </Field>
+            <Field label="Güterstand">
+              <SelectInput value={inputs.gueterstand} onChange={v => update("gueterstand", v)} options={GUETERSTAND} />
+            </Field>
+          </Row2>
+          <Field label="Kinder">
+            <NumInput value={inputs.kinder} onChange={v => update("kinder", v)} min={0} max={20} step={1} />
+          </Field>
+        </Section>
+
+        {/* Vermögen & Schulden */}
+        <Section title="Vermögen & Schulden" open={open.vermoegen} onToggle={() => toggle("vermoegen")}>
+          <p className="text-xs text-gray-400 -mt-1 mb-1">Außer diese Immobilie — für Vermögensaufstellung</p>
+          <Field label="Liquidität (Giro/Tagesgeld)">
+            <NumInput value={inputs.vg_liquid} onChange={v => update("vg_liquid", v)} min={0} step={1000} suffix="€" />
+          </Field>
+          <Field label="Wertpapiere / Depot">
+            <NumInput value={inputs.vg_depot} onChange={v => update("vg_depot", v)} min={0} step={1000} suffix="€" />
+          </Field>
+          <Field label="Sonstiges Immobilienvermögen">
+            <NumInput value={inputs.vg_immo_ext} onChange={v => update("vg_immo_ext", v)} min={0} step={10000} suffix="€" />
+          </Field>
+          <Row2>
+            <Field label="Lebensversicherung">
+              <NumInput value={inputs.vg_lv} onChange={v => update("vg_lv", v)} min={0} step={1000} suffix="€" />
+            </Field>
+            <Field label="Bausparvertrag">
+              <NumInput value={inputs.vg_bauspar} onChange={v => update("vg_bauspar", v)} min={0} step={1000} suffix="€" />
+            </Field>
+          </Row2>
+          <Field label="Sonstiges Vermögen">
+            <NumInput value={inputs.vg_sonstiges} onChange={v => update("vg_sonstiges", v)} min={0} step={1000} suffix="€" />
+          </Field>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-2">Verbindlichkeiten</p>
+          <Row2>
+            <Field label="Dispositionskredite">
+              <NumInput value={inputs.vb_dispos} onChange={v => update("vb_dispos", v)} min={0} step={500} suffix="€" />
+            </Field>
+            <Field label="Konsumkredite">
+              <NumInput value={inputs.vb_konsum} onChange={v => update("vb_konsum", v)} min={0} step={1000} suffix="€" />
+            </Field>
+          </Row2>
+          <Row2>
+            <Field label="Darlehen sonstige Immo">
+              <NumInput value={inputs.vb_immo_ext} onChange={v => update("vb_immo_ext", v)} min={0} step={10000} suffix="€" />
+            </Field>
+            <Field label="Sonstige Schulden">
+              <NumInput value={inputs.vb_sonstiges} onChange={v => update("vb_sonstiges", v)} min={0} step={1000} suffix="€" />
+            </Field>
+          </Row2>
+        </Section>
+
+        {/* Haushaltsrechnung */}
+        <Section title="Haushaltsrechnung" open={open.haushalt} onToggle={() => toggle("haushalt")}>
+          <p className="text-xs text-gray-400 -mt-1 mb-1">Monatliche Einnahmen & Ausgaben (ohne diese Immo)</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Einnahmen / Monat</p>
+          <Row2>
+            <Field label="Lohn/Gehalt I">
+              <NumInput value={inputs.hh_lohn1} onChange={v => update("hh_lohn1", v)} min={0} step={100} suffix="€" />
+            </Field>
+            <Field label="Lohn/Gehalt II">
+              <NumInput value={inputs.hh_lohn2} onChange={v => update("hh_lohn2", v)} min={0} step={100} suffix="€" />
+            </Field>
+          </Row2>
+          <Row2>
+            <Field label="Selbständige Arb.">
+              <NumInput value={inputs.hh_selbst} onChange={v => update("hh_selbst", v)} min={0} step={100} suffix="€" />
+            </Field>
+            <Field label="Rente/Pension">
+              <NumInput value={inputs.hh_rente} onChange={v => update("hh_rente", v)} min={0} step={100} suffix="€" />
+            </Field>
+          </Row2>
+          <Row2>
+            <Field label="Andere Mieten">
+              <NumInput value={inputs.hh_mieten} onChange={v => update("hh_mieten", v)} min={0} step={100} suffix="€" />
+            </Field>
+            <Field label="Sonstige">
+              <NumInput value={inputs.hh_sonst_ein} onChange={v => update("hh_sonst_ein", v)} min={0} step={100} suffix="€" />
+            </Field>
+          </Row2>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-2">Ausgaben / Monat</p>
+          <Row2>
+            <Field label="Wohnen inkl. NK">
+              <NumInput value={inputs.hh_wohnen} onChange={v => update("hh_wohnen", v)} min={0} step={50} suffix="€" />
+            </Field>
+            <Field label="Nahrung">
+              <NumInput value={inputs.hh_nahrung} onChange={v => update("hh_nahrung", v)} min={0} step={50} suffix="€" />
+            </Field>
+          </Row2>
+          <Row2>
+            <Field label="Anschaffungen">
+              <NumInput value={inputs.hh_anschaffungen} onChange={v => update("hh_anschaffungen", v)} min={0} step={50} suffix="€" />
+            </Field>
+            <Field label="Freizeit/Hobby">
+              <NumInput value={inputs.hh_freizeit} onChange={v => update("hh_freizeit", v)} min={0} step={50} suffix="€" />
+            </Field>
+          </Row2>
+          <Row2>
+            <Field label="Urlaub/Reisen">
+              <NumInput value={inputs.hh_urlaub} onChange={v => update("hh_urlaub", v)} min={0} step={50} suffix="€" />
+            </Field>
+            <Field label="Kommunikation">
+              <NumInput value={inputs.hh_kommunikation} onChange={v => update("hh_kommunikation", v)} min={0} step={25} suffix="€" />
+            </Field>
+          </Row2>
+          <Row2>
+            <Field label="Versicherungen">
+              <NumInput value={inputs.hh_versicherung} onChange={v => update("hh_versicherung", v)} min={0} step={25} suffix="€" />
+            </Field>
+            <Field label="Sonstiges">
+              <NumInput value={inputs.hh_sonst_aus} onChange={v => update("hh_sonst_aus", v)} min={0} step={50} suffix="€" />
+            </Field>
+          </Row2>
         </Section>
       </div>
     </aside>

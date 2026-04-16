@@ -11,7 +11,7 @@ export const DEFAULT_INPUTS = {
   // Mieteinnahmen
   km: 700, gsm: 120, ma: 0,
   // Bewirtschaftung
-  hg: 0, ihq: 10,   // Instandhaltung & Erneuerung €/m²/J (Standard 8-12)
+  hg: 0, ihq: 10,
   // Anfangsinvestition (Renovierung)
   inv: 0,
   // Prognose
@@ -19,6 +19,33 @@ export const DEFAULT_INPUTS = {
   // AfA / Steuer
   bj: "1951-1960", ga: 0.8,
   zve: 200000, vl: "Einzeln", ki: false,
+
+  // ── Persönliche Daten ──────────────────────────────────────────────
+  name: "", anschrift: "", familienstand: "Ledig", gueterstand: "Zugewinn", kinder: 0,
+
+  // ── Vermögensgegenstände (außer diese Immobilie) ───────────────────
+  vg_liquid: 0,      // Giro, Tagesgeld, Sparbuch
+  vg_depot: 0,       // Wertpapiere / Depot
+  vg_immo_ext: 0,    // Sonstiges Immobilienvermögen (Verkehrswert)
+  vg_lv: 0,          // Lebensversicherung (Rückkaufswert)
+  vg_bauspar: 0,     // Bausparverträge (Guthaben)
+  vg_sonstiges: 0,
+
+  // ── Verbindlichkeiten (außer diese Immobilie) ─────────────────────
+  vb_dispos: 0,      // Dispositionskredite
+  vb_konsum: 0,      // Konsumkredite / Ratenkredite
+  vb_immo_ext: 0,    // Darlehen für sonstige Immobilien
+  vb_sonstiges: 0,
+
+  // ── Haushalt Einnahmen (€/Monat netto) ────────────────────────────
+  hh_lohn1: 0, hh_lohn2: 0, hh_selbst: 0, hh_rente: 0,
+  hh_mieten: 0,      // Andere Mieteinnahmen (netto/kalt)
+  hh_sonst_ein: 0,
+
+  // ── Haushalt Ausgaben (€/Monat, ohne diese Immobilie) ────────────
+  hh_wohnen: 0, hh_nahrung: 0, hh_anschaffungen: 0,
+  hh_freizeit: 0, hh_urlaub: 0, hh_kommunikation: 0,
+  hh_versicherung: 0, hh_sonst_aus: 0,
 };
 
 async function apiCall(action, params) {
