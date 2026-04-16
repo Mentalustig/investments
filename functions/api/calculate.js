@@ -46,6 +46,16 @@ function calcIRR(cashflows) {
   return (r > -0.99 && r < 10) ? r : null;
 }
 
+// Rent in year i: 2 % p.a. catch-up to marktmiete, then mst
+function rentForYear(km, marktmiete, mst, i) {
+  if (!marktmiete || marktmiete <= km) return km * Math.pow(1 + mst, i);
+  // Phase 1: 2 % until market cap
+  const catchupYears = Math.log(marktmiete / km) / Math.log(1.02);
+  if (i <= catchupYears) return Math.min(km * Math.pow(1.02, i), marktmiete);
+  // Phase 2: grow at mst from market level
+  return marktmiete * Math.pow(1 + mst, Math.max(0, i - Math.ceil(catchupYears)));
+}
+
 function calculate(p) {
   const {
     kp, km, z1, t1, d1p, d2s = 0, z2 = 0, t2 = 0,
@@ -55,6 +65,7 @@ function calculate(p) {
     zve = 60000, vl = "Einzeln", ki = false,
     mk = 0, no = 0.015, gb = 0.005, bl = "Nordrhein-Westfalen",
     zfest = 10, zans,
+    marktmiete = 0,   // €/M Marktmiete-Cap; 0 = deaktiviert
   } = p;
 
   const zans_ = zans != null ? zans : z1;
@@ -104,7 +115,7 @@ function calculate(p) {
     const rate1 = i < zfest ? z1 : zans_;
     const a1_i = (rate1 + t1) * d1;
 
-    const mi = km * Math.pow(1 + mst, i);
+    const mi = rentForYear(km, marktmiete, mst, i);
     const ui = um * Math.pow(1 + kst, i);
     const wi = mi + ui;
     const we = (kp + inv) * Math.pow(1 + wst, i + 1);
@@ -177,6 +188,10 @@ function calculate(p) {
 
   const vt = rows.find(r => r.rs <= 0);
   const cfPositive = rows.find(r => r.cn >= 0);
+  // Year in which rent first reaches market level (for UI display)
+  const mietCatchupJahr = marktmiete > 0 && km < marktmiete
+    ? 2026 + Math.ceil(Math.log(marktmiete / km) / Math.log(1.02))
+    : null;
 
   const s = {
     cfn, cfop, stm, zm, tm, rm, afm, afp, afb, afs,
@@ -188,6 +203,8 @@ function calculate(p) {
     gr,
     vtj: vt ? vt.jr : null,
     cfPositiveYear: cfPositive ? cfPositive.jr : null,
+    mietCatchupJahr,
+    marktmiete,
     ihm, mam, hg,
   };
 

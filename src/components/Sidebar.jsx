@@ -78,6 +78,61 @@ function Row2({ children }) {
   return <div className="grid grid-cols-2 gap-2">{children}</div>;
 }
 
+// Mietspiegel-Näherungswerte (Kaltmiete €/m², 2024) — Quellen: Mietspiegel, empirica, IW Köln
+const MIETSPIEGEL_QM = {
+  münchen: 22, munich: 22,
+  frankfurt: 17,
+  hamburg: 16,
+  berlin: 14,
+  stuttgart: 17,
+  düsseldorf: 14, dusseldorf: 14,
+  köln: 15, koeln: 15,
+  nürnberg: 13, nuernberg: 13,
+  münchen: 22,
+  bonn: 14,
+  mannheim: 13,
+  karlsruhe: 13,
+  augsburg: 14,
+  wiesbaden: 15,
+  freiburg: 16,
+  münster: 13, muenster: 13,
+  hannover: 12,
+  dresden: 11,
+  leipzig: 10,
+  bremen: 11,
+  dortmund: 10,
+  essen: 9,
+  duisburg: 8,
+  bochum: 9,
+  wuppertal: 8,
+  bielefeld: 9,
+  kiel: 11,
+  lübeck: 11, lubeck: 11,
+  magdeburg: 8,
+  erfurt: 9,
+  rostock: 10,
+  halle: 8,
+  mainz: 15,
+  heidelberg: 16,
+  regensburg: 14,
+  ingolstadt: 14,
+  ulm: 13,
+  aachen: 12,
+  braunschweig: 10,
+  paderborn: 9,
+  göttingen: 11,
+  kassel: 10,
+};
+
+function lookupMarktmiete(adr, wfl) {
+  if (!adr || !wfl) return null;
+  const lower = adr.toLowerCase();
+  for (const [city, qm] of Object.entries(MIETSPIEGEL_QM)) {
+    if (lower.includes(city)) return { qm, total: Math.round(qm * wfl), city };
+  }
+  return null;
+}
+
 const FAMILIENSTAND = ["Ledig", "Verheiratet", "Eingetragene Partnerschaft", "Getrennt lebend", "Geschieden", "Verwitwet"];
 const GUETERSTAND   = ["Zugewinn", "Gütertrennung", "Gütergemeinschaft"];
 
@@ -172,7 +227,36 @@ export default function Sidebar({ inputs, update }) {
 
         {/* Prognose */}
         <Section title="Prognose" open={open.prognose} onToggle={() => toggle("prognose")}>
-          <Field label="Mietsteigerung p.a." hint="Historisch ~2–3 %">
+          {(() => {
+            const lookup = lookupMarktmiete(inputs.adr, inputs.wfl);
+            const active = inputs.marktmiete > 0 && inputs.marktmiete > inputs.km;
+            return (
+              <Field
+                label="Marktmiete (Kap)"
+                hint={
+                  active
+                    ? `2% Staffel bis ${inputs.marktmiete} €/M, dann ${(inputs.mst*100).toFixed(1)}% p.a.`
+                    : lookup
+                    ? `Mietspiegel ${lookup.city.charAt(0).toUpperCase()+lookup.city.slice(1)}: ~${lookup.qm} €/m² → ${lookup.total} €/M`
+                    : "0 = deaktiviert — 2% Staffel bis zum Marktniveau"
+                }
+              >
+                <div className="flex gap-1.5">
+                  <NumInput value={inputs.marktmiete} onChange={v => update("marktmiete", v)} min={0} step={25} suffix="€" />
+                  {lookup && inputs.marktmiete !== lookup.total && (
+                    <button
+                      onClick={() => update("marktmiete", lookup.total)}
+                      className="px-2 shrink-0 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-xs font-semibold hover:bg-blue-100 transition-colors"
+                      title={`Mietspiegel-Wert: ${lookup.total} €/M`}
+                    >
+                      Auto
+                    </button>
+                  )}
+                </div>
+              </Field>
+            );
+          })()}
+          <Field label="Mietsteigerung p.a. (nach Cap)" hint="Historisch ~2–3 %">
             <NumInput value={(inputs.mst * 100).toFixed(1)} onChange={v => update("mst", v / 100)} min={0} max={10} step={0.5} suffix="%" />
           </Field>
           <Field label="Wertsteigerung p.a." hint="Immo DE langfristig ~2–3 %">

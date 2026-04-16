@@ -192,6 +192,9 @@ export default function Cashflow({ result, inputs, loading }) {
         <div className="grid grid-cols-4 gap-x-6 gap-y-2">
           {[
             ["Kaltmiete", `${fe(inputs.km)}/M`],
+            inputs.marktmiete > 0 && inputs.marktmiete > inputs.km
+              ? ["Marktmiete (Cap)", `${fe(inputs.marktmiete)}/M — Catchup bis ${s.mietCatchupJahr ?? "?"}`]
+              : ["Mietsteigerung", fp(inputs.mst)],
             ["Zinssatz", fp(inputs.z1)],
             ["Zinsbindung", `${zfest} Jahre`],
             ["Anschlusszins", fp(inputs.zans ?? inputs.z1)],
@@ -199,7 +202,7 @@ export default function Cashflow({ result, inputs, loading }) {
             ["Grenzsteuersatz", fp(s.gst)],
             ["AfA / Monat", fe(s.afm)],
             ["Instandhaltung", `${inputs.ihq} €/m²/J`],
-          ].map(([k, v]) => (
+          ].filter(Boolean).map(([k, v]) => (
             <div key={k} className="flex justify-between border-b border-gray-100 pb-1.5 text-sm">
               <span className="text-gray-500">{k}</span>
               <span className="font-semibold tabular-nums">{v}</span>
