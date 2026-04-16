@@ -17,6 +17,7 @@ export const DEFAULT_INPUTS = {
   // Prognose
   mst: 0, wst: 0.02, kst: 0.02,
   marktmiete: 0,  // €/M cap für 2%-Staffel; 0 = deaktiviert
+  lage: "mittel", // Wohnlage für Mietspiegel-Lookup
   // AfA / Steuer
   bj: "1951-1960", ga: 0.8,
   zve: 200000, vl: "Einzeln", ki: false,

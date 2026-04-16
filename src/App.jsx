@@ -3,6 +3,7 @@ import { useAuth } from "./useAuth.js";
 import { useCalculator } from "./useCalculator.js";
 import { useScenarios } from "./useScenarios.js";
 import Sidebar from "./components/Sidebar.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import TabCashflow from "./components/tabs/Cashflow.jsx";
 import TabRendite from "./components/tabs/Rendite.jsx";
 import TabRisiko from "./components/tabs/Risiko.jsx";
@@ -55,11 +56,13 @@ export default function App() {
               Fehler: {error}
             </div>
           )}
-          {tab === "cashflow"  && <TabCashflow  result={result} inputs={inputs} loading={loading} />}
-          {tab === "rendite"   && <TabRendite   result={result} inputs={inputs} loading={loading} />}
-          {tab === "risiko"    && <TabRisiko    result={result} inputs={inputs} beKm={beKm} beZ1={beZ1} loading={loading} />}
-          {tab === "bank"      && <TabBank      result={result} inputs={inputs} />}
-          {tab === "szenarien" && <TabSzenarien scenarios={scenarios} inputs={inputs} onLoad={loadScenario} onSave={save} onDelete={remove} />}
+          <ErrorBoundary key={tab}>
+            {tab === "cashflow"  && <TabCashflow  result={result} inputs={inputs} loading={loading} />}
+            {tab === "rendite"   && <TabRendite   result={result} inputs={inputs} loading={loading} />}
+            {tab === "risiko"    && <TabRisiko    result={result} inputs={inputs} beKm={beKm} beZ1={beZ1} loading={loading} />}
+            {tab === "bank"      && <TabBank      result={result} inputs={inputs} />}
+            {tab === "szenarien" && <TabSzenarien scenarios={scenarios} inputs={inputs} onLoad={loadScenario} onSave={save} onDelete={remove} />}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

@@ -78,57 +78,66 @@ function Row2({ children }) {
   return <div className="grid grid-cols-2 gap-2">{children}</div>;
 }
 
-// Mietspiegel-Näherungswerte (Kaltmiete €/m², 2024) — Quellen: Mietspiegel, empirica, IW Köln
-const MIETSPIEGEL_QM = {
-  münchen: 22, munich: 22,
-  frankfurt: 17,
-  hamburg: 16,
-  berlin: 14,
-  stuttgart: 17,
-  düsseldorf: 14, dusseldorf: 14,
-  köln: 15, koeln: 15,
-  nürnberg: 13, nuernberg: 13,
-  münchen: 22,
-  bonn: 14,
-  mannheim: 13,
-  karlsruhe: 13,
-  augsburg: 14,
-  wiesbaden: 15,
-  freiburg: 16,
-  münster: 13, muenster: 13,
-  hannover: 12,
-  dresden: 11,
-  leipzig: 10,
-  bremen: 11,
-  dortmund: 10,
-  essen: 9,
-  duisburg: 8,
-  bochum: 9,
-  wuppertal: 8,
-  bielefeld: 9,
-  kiel: 11,
-  lübeck: 11, lubeck: 11,
-  magdeburg: 8,
-  erfurt: 9,
-  rostock: 10,
-  halle: 8,
-  mainz: 15,
-  heidelberg: 16,
-  regensburg: 14,
-  ingolstadt: 14,
-  ulm: 13,
-  aachen: 12,
-  braunschweig: 10,
-  paderborn: 9,
-  göttingen: 11,
-  kassel: 10,
-};
+// Mietspiegel-Näherungswerte (Kaltmiete €/m²/M, 2024) — einfach / mittel / gut / sehr gut
+// Quellen: qualifizierte Mietspiegel der Städte, empirica-Preisdatenbank, IW Köln
+const MIETSPIEGEL = [
+  // [ Suchbegriffe, [einfach, mittel, gut, sehrgut], Quelle ]
+  { keys: ["münchen", "munich", "schwabing", "maxvorstadt", "neuhausen", "bogenhausen", "haidhausen"], tiers: [16, 21, 27, 35], src: "München MS 2023" },
+  { keys: ["berlin", "mitte", "prenzlauer", "friedrichshain", "kreuzberg", "charlottenburg", "schöneberg", "zehlendorf"], tiers: [9, 13, 17, 22], src: "Berlin MS 2023" },
+  { keys: ["hamburg", "altona", "eimsbüttel", "harvestehude", "winterhude", "barmbek", "wandsbek"], tiers: [11, 15, 19, 25], src: "Hamburg MS 2023" },
+  { keys: ["frankfurt"], tiers: [11, 16, 21, 27], src: "Frankfurt MS 2024" },
+  { keys: ["münchen süd", "münchen north"], tiers: [16, 21, 27, 35], src: "München MS 2023" },
+  { keys: ["stuttgart", "stuttgart-mitte", "vaihingen", "degerloch", "bad cannstatt"], tiers: [11, 15, 20, 26], src: "Stuttgart MS 2022" },
+  { keys: ["düsseldorf", "dusseldorf", "oberkassel", "pempelfort", "gerresheim"], tiers: [10, 13, 17, 22], src: "Düsseldorf MS 2022" },
+  { keys: ["köln", "koeln", "ehrenfeld", "nippes", "deutz", "lindenthal"], tiers: [10, 13, 17, 22], src: "Köln MS 2022" },
+  { keys: ["münchen/", "muenchen"], tiers: [16, 21, 27, 35], src: "München MS 2023" },
+  { keys: ["nürnberg", "nuernberg", "nbg"], tiers: [8, 11, 14, 18], src: "Nürnberg MS 2022" },
+  { keys: ["bonn"], tiers: [9, 12, 15, 19], src: "Bonn MS 2022" },
+  { keys: ["mannheim"], tiers: [7, 10, 13, 17], src: "Mannheim MS 2022" },
+  { keys: ["karlsruhe"], tiers: [8, 11, 14, 18], src: "Karlsruhe MS 2023" },
+  { keys: ["augsburg"], tiers: [9, 12, 15, 19], src: "Augsburg MS 2022" },
+  { keys: ["wiesbaden"], tiers: [10, 13, 17, 22], src: "Wiesbaden MS 2022" },
+  { keys: ["freiburg"], tiers: [11, 14, 18, 23], src: "Freiburg MS 2023" },
+  { keys: ["münster", "muenster"], tiers: [8, 11, 14, 18], src: "Münster MS 2022" },
+  { keys: ["hannover"], tiers: [7, 10, 13, 16], src: "Hannover MS 2022" },
+  { keys: ["dresden"], tiers: [7, 10, 13, 16], src: "Dresden MS 2022" },
+  { keys: ["leipzig"], tiers: [6, 9, 12, 15], src: "Leipzig MS 2023" },
+  { keys: ["bremen"], tiers: [7, 9, 12, 15], src: "Bremen MS 2022" },
+  { keys: ["dortmund"], tiers: [6, 8, 11, 14], src: "Dortmund MS 2022" },
+  { keys: ["essen"], tiers: [5, 7, 10, 13], src: "Essen MS 2022" },
+  { keys: ["duisburg"], tiers: [5, 7, 9, 12], src: "Duisburg MS 2022" },
+  { keys: ["bochum"], tiers: [5, 7, 10, 13], src: "Bochum MS 2022" },
+  { keys: ["bielefeld"], tiers: [5, 8, 11, 14], src: "Bielefeld MS 2022" },
+  { keys: ["kiel"], tiers: [7, 10, 13, 16], src: "Kiel MS 2022" },
+  { keys: ["lübeck", "lubeck"], tiers: [7, 9, 12, 15], src: "Lübeck MS 2022" },
+  { keys: ["mainz"], tiers: [10, 13, 17, 21], src: "Mainz MS 2022" },
+  { keys: ["heidelberg"], tiers: [10, 13, 17, 22], src: "Heidelberg MS 2022" },
+  { keys: ["regensburg"], tiers: [9, 12, 16, 21], src: "Regensburg MS 2022" },
+  { keys: ["ingolstadt"], tiers: [9, 12, 15, 20], src: "Ingolstadt MS 2022" },
+  { keys: ["ulm"], tiers: [8, 11, 14, 18], src: "Ulm MS 2022" },
+  { keys: ["aachen"], tiers: [7, 10, 13, 17], src: "Aachen MS 2022" },
+  { keys: ["erfurt"], tiers: [6, 8, 11, 14], src: "Erfurt MS 2022" },
+  { keys: ["rostock"], tiers: [7, 9, 12, 15], src: "Rostock MS 2022" },
+  { keys: ["magdeburg"], tiers: [5, 7, 9, 12], src: "Magdeburg MS 2022" },
+  { keys: ["kassel"], tiers: [6, 8, 11, 14], src: "Kassel MS 2022" },
+  { keys: ["göttingen", "goettingen"], tiers: [7, 10, 13, 16], src: "Göttingen MS 2022" },
+  { keys: ["münster"], tiers: [8, 11, 14, 18], src: "Münster MS 2022" },
+  { keys: ["potsdam"], tiers: [9, 12, 16, 20], src: "Potsdam MS 2022" },
+  { keys: ["halle"], tiers: [5, 7, 9, 12], src: "Halle MS 2022" },
+];
 
-function lookupMarktmiete(adr, wfl) {
+const LAGEN = ["einfach", "mittel", "gut", "sehr gut"];
+
+function lookupMarktmiete(adr, wfl, lage) {
   if (!adr || !wfl) return null;
   const lower = adr.toLowerCase();
-  for (const [city, qm] of Object.entries(MIETSPIEGEL_QM)) {
-    if (lower.includes(city)) return { qm, total: Math.round(qm * wfl), city };
+  const tierIdx = LAGEN.indexOf(lage);
+  const idx = tierIdx >= 0 ? tierIdx : 1; // default: mittel
+  for (const entry of MIETSPIEGEL) {
+    if (entry.keys.some(k => lower.includes(k))) {
+      const qm = entry.tiers[idx];
+      return { qm, total: Math.round(qm * wfl), city: entry.keys[0], src: entry.src };
+    }
   }
   return null;
 }
@@ -228,33 +237,34 @@ export default function Sidebar({ inputs, update }) {
         {/* Prognose */}
         <Section title="Prognose" open={open.prognose} onToggle={() => toggle("prognose")}>
           {(() => {
-            const lookup = lookupMarktmiete(inputs.adr, inputs.wfl);
+            const lookup = lookupMarktmiete(inputs.adr, inputs.wfl, inputs.lage);
             const active = inputs.marktmiete > 0 && inputs.marktmiete > inputs.km;
-            return (
+            return (<>
+              <Field label="Wohnlage" hint={lookup ? `${lookup.src}: ~${lookup.qm} €/m² (${inputs.lage})` : "Für Mietspiegel-Lookup"}>
+                <SelectInput value={inputs.lage} onChange={v => update("lage", v)} options={LAGEN} />
+              </Field>
               <Field
-                label="Marktmiete (Kap)"
+                label="Marktmiete / Kap"
                 hint={
                   active
-                    ? `2% Staffel bis ${inputs.marktmiete} €/M, dann ${(inputs.mst*100).toFixed(1)}% p.a.`
-                    : lookup
-                    ? `Mietspiegel ${lookup.city.charAt(0).toUpperCase()+lookup.city.slice(1)}: ~${lookup.qm} €/m² → ${lookup.total} €/M`
-                    : "0 = deaktiviert — 2% Staffel bis zum Marktniveau"
+                    ? `2 % Staffel bis ${inputs.marktmiete} €/M, dann ${(inputs.mst*100).toFixed(1)} % p.a.`
+                    : "0 = aus — 2 % Staffel bis zum Marktniveau"
                 }
               >
                 <div className="flex gap-1.5">
-                  <NumInput value={inputs.marktmiete} onChange={v => update("marktmiete", v)} min={0} step={25} suffix="€" />
+                  <NumInput value={inputs.marktmiete} onChange={v => update("marktmiete", v)} min={0} step={25} suffix="€/M" />
                   {lookup && inputs.marktmiete !== lookup.total && (
                     <button
                       onClick={() => update("marktmiete", lookup.total)}
-                      className="px-2 shrink-0 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-xs font-semibold hover:bg-blue-100 transition-colors"
-                      title={`Mietspiegel-Wert: ${lookup.total} €/M`}
+                      className="px-2 shrink-0 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-xs font-semibold hover:bg-blue-100 transition-colors whitespace-nowrap"
+                      title={`${lookup.src}: ${lookup.total} €/M`}
                     >
-                      Auto
+                      {lookup.total} €
                     </button>
                   )}
                 </div>
               </Field>
-            );
+            </>);
           })()}
           <Field label="Mietsteigerung p.a. (nach Cap)" hint="Historisch ~2–3 %">
             <NumInput value={(inputs.mst * 100).toFixed(1)} onChange={v => update("mst", v / 100)} min={0} max={10} step={0.5} suffix="%" />
