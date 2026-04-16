@@ -50,13 +50,26 @@ export default function Rendite({ result, inputs, loading }) {
       <div className="grid grid-cols-3 gap-4">
         <div className="col-span-1 bg-white rounded-xl border border-gray-200 p-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">IRR — Interner Zinsfuß</p>
-          <p className="text-xs text-gray-400 mb-4">EK-Rendite inkl. Cashflows + Verkauf am Ende</p>
+
+          {/* What goes in */}
+          <div className="bg-gray-50 rounded-lg p-3 text-xs mb-4 space-y-1">
+            <p className="font-semibold text-gray-600 mb-1.5">Was geht in den IRR rein?</p>
+            <div className="flex justify-between"><span className="text-gray-500">− Eigenkapital (Jahr 0)</span><span className="tabular-nums font-medium text-red-500">−{(s.ek/1000).toFixed(1)} k€</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">± Jährlicher CF netto</span><span className="tabular-nums font-medium">{s.cfn >= 0 ? "+" : ""}{(s.cfn*12/1000).toFixed(1)} k€/J</span></div>
+            <div className="flex justify-between border-t border-gray-200 pt-1 mt-1"><span className="text-gray-500">+ Verkauf = Eigenkapital</span><span className="tabular-nums font-medium text-green-700">+({df[9] ? (df[9].nv/1000).toFixed(1) : "—"} k€ in J10)</span></div>
+            <p className="text-gray-400 leading-relaxed mt-1.5">Negativer IRR = laufende Zuzahlungen übersteigen das aufgebaute Eigenkapital im gewählten Zeithorizont.</p>
+          </div>
+
           <div className="flex flex-col gap-1">
             {IRR_YEARS.map(yr => {
               const v = s.irr ? s.irr[yr] : null;
+              const row = df[yr - 1];
               return (
                 <div key={yr} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
-                  <span className="text-sm text-gray-600">nach {yr} Jahren</span>
+                  <div>
+                    <span className="text-sm text-gray-600">nach {yr} Jahren</span>
+                    {row && <span className="text-xs text-gray-400 block">EK {(row.nv/1000).toFixed(0)} k€</span>}
+                  </div>
                   <span className={`text-base font-bold tabular-nums ${irrColor(v)}`}>
                     {v != null ? fp(v, 1) : "—"}
                   </span>
@@ -64,7 +77,6 @@ export default function Rendite({ result, inputs, loading }) {
               );
             })}
           </div>
-          <p className="text-xs text-gray-400 mt-4">Annahme: Verkauf zum Marktwert am jeweiligen Zeithorizont</p>
         </div>
 
         <div className="col-span-2 flex flex-col gap-3">

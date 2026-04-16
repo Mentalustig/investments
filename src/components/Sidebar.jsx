@@ -8,18 +8,30 @@ const BUNDESLAENDER = [
 const BAUJAHRE = ["vor 1925","1925-1950","1951-1960","1961-1970","1971-1980","1981-1990","1991-2000","2001-2010","ab 2010"];
 const GREST = {"Baden-Württemberg":0.05,"Bayern":0.035,"Berlin":0.06,"Brandenburg":0.065,"Bremen":0.05,"Hamburg":0.055,"Hessen":0.06,"Mecklenburg-Vorpommern":0.06,"Niedersachsen":0.05,"Nordrhein-Westfalen":0.065,"Rheinland-Pfalz":0.05,"Saarland":0.065,"Sachsen":0.055,"Sachsen-Anhalt":0.05,"Schleswig-Holstein":0.065,"Thüringen":0.065};
 
+const SECTION_COLORS = {
+  "Objekt":              "border-l-blue-400",
+  "Finanzierung":        "border-l-green-500",
+  "Kosten & Nebenkosten":"border-l-amber-400",
+  "Prognose":            "border-l-purple-400",
+  "Steuer & AfA":        "border-l-orange-400",
+  "Persönliche Daten":   "border-l-gray-400",
+  "Vermögen & Schulden": "border-l-teal-400",
+  "Haushaltsrechnung":   "border-l-pink-400",
+};
+
 function Section({ title, open, onToggle, children }) {
+  const accent = SECTION_COLORS[title] || "border-l-gray-300";
   return (
-    <div className="border-b border-gray-100 last:border-0">
+    <div className={`border-b border-gray-100 last:border-0 border-l-4 ${open ? accent : "border-l-transparent"} transition-all`}>
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
       >
-        <span className="text-xs font-700 uppercase tracking-wider text-gray-500">{title}</span>
-        <span className={`text-gray-400 text-sm transition-transform duration-200 ${open ? "rotate-180" : ""}`}>▾</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-600">{title}</span>
+        <span className={`text-gray-400 text-xs transition-transform duration-200 ${open ? "rotate-180" : ""}`}>▾</span>
       </button>
       {open && (
-        <div className="px-4 pb-4 flex flex-col gap-3">
+        <div className="px-4 pb-5 flex flex-col gap-3.5">
           {children}
         </div>
       )}
@@ -39,17 +51,29 @@ function Field({ label, hint, children }) {
 
 const inputCls = "w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400 transition-colors";
 
+function fmtDE(v) {
+  const n = parseFloat(v);
+  if (!Number.isFinite(n) || Math.abs(n) < 10000) return null;
+  return n.toLocaleString("de-DE", { maximumFractionDigits: 0 });
+}
+
 function NumInput({ value, onChange, min, max, step = 1, suffix }) {
+  const formatted = fmtDE(value);
   return (
-    <div className="relative">
-      <input
-        type="number"
-        className={`${inputCls} ${suffix ? "pr-9" : ""}`}
-        value={value} min={min} max={max} step={step}
-        onChange={e => onChange(Number(e.target.value))}
-      />
-      {suffix && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">{suffix}</span>
+    <div>
+      <div className="relative">
+        <input
+          type="number"
+          className={`${inputCls} ${suffix ? "pr-10" : ""}`}
+          value={value} min={min} max={max} step={step}
+          onChange={e => onChange(Number(e.target.value))}
+        />
+        {suffix && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">{suffix}</span>
+        )}
+      </div>
+      {formatted && (
+        <p className="text-[11px] text-green-600 font-medium mt-0.5 tabular-nums">= {formatted}{suffix === "€" || suffix === "€/M" || suffix === "€/J" ? " €" : suffix === "%" ? " %" : ""}</p>
       )}
     </div>
   );
@@ -151,11 +175,11 @@ export default function Sidebar({ inputs, update }) {
   const gr = GREST[inputs.bl] || 0.065;
 
   return (
-    <aside className="w-64 shrink-0 bg-white border-r border-gray-200 h-screen overflow-y-auto flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-4 py-4 border-b border-gray-100">
-        <p className="text-xs font-bold text-brand-600 uppercase tracking-widest">Investment Tools</p>
-        <h1 className="text-base font-bold text-gray-900 mt-0.5">Immobilien-Kalkulator</h1>
+      <div className="px-4 py-4 border-b border-gray-200 shrink-0">
+        <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Investment Tools</p>
+        <h1 className="text-sm font-bold text-gray-900 mt-0.5">Immobilien-Kalkulator</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -424,6 +448,6 @@ export default function Sidebar({ inputs, update }) {
           </Row2>
         </Section>
       </div>
-    </aside>
+    </div>
   );
 }
