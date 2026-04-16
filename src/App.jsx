@@ -11,12 +11,14 @@ import TabBank from "./components/tabs/Bankgespraech.jsx";
 import TabSzenarien from "./components/tabs/SzenarienSpeichern.jsx";
 import TabSensitivitaet from "./components/tabs/Sensitivitaet.jsx";
 import TabCheckliste from "./components/tabs/Checkliste.jsx";
+import TabBenchmarking from "./components/tabs/Benchmarking.jsx";
 
 const TABS = [
   { id: "rendite",        label: "Rendite & IRR" },
   { id: "cashflow",       label: "Cashflow" },
   { id: "risiko",         label: "Risiko" },
   { id: "sensitivitaet",  label: "Sensitivitäten" },
+  { id: "benchmarking",   label: "Benchmarking" },
   { id: "bank",           label: "Bankgespräch" },
   { id: "checkliste",     label: "Checkliste" },
   { id: "szenarien",      label: "Szenarien" },
@@ -95,6 +97,7 @@ export default function App() {
             {tab === "cashflow"      && <TabCashflow      result={result} inputs={inputs} loading={loading} />}
             {tab === "risiko"        && <TabRisiko        result={result} inputs={inputs} beKm={beKm} beZ1={beZ1} loading={loading} />}
             {tab === "sensitivitaet" && <TabSensitivitaet result={result} inputs={inputs} loading={loading} />}
+            {tab === "benchmarking"  && <TabBenchmarking   result={result} inputs={inputs} />}
             {tab === "bank"          && <TabBank          result={result} inputs={inputs} />}
             {tab === "checkliste"    && <TabCheckliste />}
             {tab === "szenarien"     && <TabSzenarien     scenarios={scenarios} inputs={inputs} onLoad={loadScenario} onSave={save} onDelete={remove} />}

@@ -155,7 +155,19 @@ function calculate(p) {
   rows.forEach(r => {
     cumCf += r.cj; r.kcf = cumCf;
     cumZ += r.zi; r.kz = cumZ;
-    r.tot = r.nv + cumCf;  // Nettovermögen + kumulierter CF
+    r.tot = r.nv + cumCf;
+  });
+
+  // Fair ETF: invest EK upfront + cover any monthly negative CF (same total cash out)
+  let etfFair7 = ek, etfFair5 = ek;
+  rows.forEach(r => {
+    const topUp = Math.max(0, -r.cn); // if CF negative, add that monthly to ETF
+    for (let m = 0; m < 12; m++) {
+      etfFair7 = etfFair7 * (1 + 0.07 / 12) + topUp;
+      etfFair5 = etfFair5 * (1 + 0.05 / 12) + topUp;
+    }
+    r.ef7 = Math.round(etfFair7);
+    r.ef5 = Math.round(etfFair5);
   });
 
   // IRR für verschiedene Zeithorizonte
@@ -176,14 +188,15 @@ function calculate(p) {
     irr[yr] = calcIRR(cfs);
   }
 
-  // Kumulierte Einzahlungen vs. Rückflüsse für Rendite-Tab
   const cumInvested = rows.map((r, i) => ({
+    j: i + 1,
     year: r.jr,
-    eingezahlt: ek + Math.max(0, -rows.slice(0, i + 1).reduce((s, x) => s + x.cj, 0)),
-    rueckfluss: Math.max(0, rows.slice(0, i + 1).reduce((s, x) => s + x.cj, 0)),
+    kcf: r.kcf,
     vermoegen: r.tot,
-    etf7: ek * Math.pow(1.07, i + 1),
-    etf5: ek * Math.pow(1.05, i + 1),
+    etf7: Math.round(ek * Math.pow(1.07, i + 1)),
+    etf5: Math.round(ek * Math.pow(1.05, i + 1)),
+    etfFair7: r.ef7,
+    etfFair5: r.ef5,
   }));
 
   const vt = rows.find(r => r.rs <= 0);
@@ -193,10 +206,15 @@ function calculate(p) {
     ? 2026 + Math.ceil(Math.log(marktmiete / km) / Math.log(1.02))
     : null;
 
+  const noi = (km - hg - ihm - mam) * 12;            // Net Operating Income
+  const coc = ek > 0 ? cfop * 12 / ek : 0;           // Cash-on-Cash (post-debt, pre-tax)
+  const debtYield = dg > 0 ? noi / dg : 0;           // Debt Yield (bank metric)
+  const breakevenOcc = km > 0 ? (rm + bg) / km : 0;  // Break-even occupancy rate
+
   const s = {
     cfn, cfop, stm, zm, tm, rm, afm, afp, afb, afs,
     gst: GST, bg, wm, km,
-    br, nmr, verv,
+    br, nmr, verv, noi, coc, debtYield, breakevenOcc,
     ek, gi, dg, d1, nk,
     ekr: ek > 0 ? (12 * cfn + 12 * tm + kp * wst) / ek : 0,
     irr,
